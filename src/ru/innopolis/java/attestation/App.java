@@ -1,5 +1,6 @@
 package ru.innopolis.java.attestation;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,25 +9,41 @@ import java.util.Objects;
 import java.util.Scanner;
 
 class Product {
-    private String name;
-    private double price;
+    private final String name;
+    private final double price;
 
     public Product(String name, double price) {
-        if (name == null || name.trim().isEmpty()){
-            throw new IllegalArgumentException("Название продукта не может быть пустым");
-        }
-        if (price < 0){
-            throw new IllegalArgumentException("Цена продукта должна быть положительной");
-        }
+        validateName(name);
+        validatePrice(price);
         this.name = name;
         this.price = price;
     }
+
+    protected void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Название продукта не может быть пустым");
+        }
+        if (name.length() < 3) {
+            throw new IllegalArgumentException("Название должно быть не короче 3 символов");
+        }
+        if (name.matches("\\d+")) {
+            throw new IllegalArgumentException("Название не должно состоять только из цифр");
+        }
+    }
+
+    protected void validatePrice(double price) {
+        if (price <= 0) {
+            throw new IllegalArgumentException("Цена должна быть положительной");
+        }
+    }
+
     public String getName() { return name; }
+
     public double getPrice() { return price; }
 
     @Override
     public String toString() {
-        return name;
+        return name + " (" + price + " руб.)";
     }
 
     @Override
@@ -40,6 +57,40 @@ class Product {
     @Override
     public int hashCode() {
         return Objects.hash(name, price);
+    }
+}
+
+class DiscountProduct extends Product {
+    private final double discount;       // размер скидки в %
+    private final LocalDate expiryDate;  // срок действия скидки
+
+    public DiscountProduct(String name, double price, double discount, LocalDate expiryDate) {
+        super(name, price);
+        if (discount < 0 || discount >= 100) {
+            throw new IllegalArgumentException("Скидка должна быть от 0 до 99%");
+        }
+        if (expiryDate == null) {
+            throw new IllegalArgumentException("Дата окончания скидки обязательна");
+        }
+        this.discount = discount;
+        this.expiryDate = expiryDate;
+    }
+
+    @Override
+    public double getPrice() {
+        if (LocalDate.now().isBefore(expiryDate.plusDays(1))) { // пока дата не вышла
+            double discountedPrice = super.getPrice() * (1 - discount / 100);
+            if (discountedPrice <= 0) {
+                throw new IllegalArgumentException("Цена со скидкой должна быть положительной");
+            }
+            return discountedPrice;
+        }
+        return super.getPrice();
+    }
+
+    @Override
+    public String toString() {
+        return super.getName() + " (скидка " + discount + "%, до " + expiryDate + ")";
     }
 }
 
@@ -127,15 +178,26 @@ public class App {
         }
 
         // Ввод продуктов
-        System.out.println("Введите продукты (Название = цена), пустая строка для завершения:");
+        System.out.println("Введите продукты (Название = цена) или (Название = цена : скидка% : ГГГГ-ММ-ДД), пустая строка для завершения:");
         while (true) {
             String line = sc.nextLine().trim();
             if (line.isEmpty()) break;
             try {
-                String[] parts = line.split("=");
-                String name = parts[0].trim();
-                double price = Double.parseDouble(parts[1].trim());
-                products.put(name, new Product(name, price));
+                if (line.contains(":")) {
+                    // Формат: Название = цена : скидка% : 2025-08-20
+                    String[] parts = line.split("=");
+                    String name = parts[0].trim();
+                    String[] values = parts[1].split(":");
+                    double price = Double.parseDouble(values[0].trim());
+                    double discount = Double.parseDouble(values[1].replace("%", "").trim());
+                    LocalDate expiry = LocalDate.parse(values[2].trim());
+                    products.put(name, new DiscountProduct(name, price, discount, expiry));
+                } else {
+                    String[] parts = line.split("=");
+                    String name = parts[0].trim();
+                    double price = Double.parseDouble(parts[1].trim());
+                    products.put(name, new Product(name, price));
+                }
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             }
