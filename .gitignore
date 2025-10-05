@@ -24,3 +24,5 @@ hs_err_pid*
 replay_pid*
 java-console-game-template/.sources
 java-console-game-template/.idea/
+final_work/src/main/resources/application.properties
+final_work/target/
