@@ -1,6 +1,8 @@
 package com.example.dungeon.model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Player extends Entity {
     private int attack;
@@ -11,15 +13,17 @@ public class Player extends Entity {
         this.attack = attack;
     }
 
-    public int getAttack() {
-        return attack;
+    public Player(String name) {
+        super(name, 20);
+        this.attack = 5;
     }
 
-    public void setAttack(int attack) {
-        this.attack = attack;
-    }
+    public int getAttack() { return attack; }
+    public void setAttack(int attack) { this.attack = attack; }
 
-    public List<Item> getInventory() {
-        return inventory;
-    }
+    public List<Item> getInventory() { return inventory; }
+
+    // SaveLoad
+    public void setName(String name) { super.setName(name); }
+    public void setHp(int hp) { super.setHp(hp); }
 }
