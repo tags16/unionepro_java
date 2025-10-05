@@ -1,0 +1,44 @@
+# Клиент-серверное приложение для учёта заказов (JDBC)
+
+## Описание
+
+Это итоговая работа по курсу "Клиент-серверные приложения на Java".
+Приложение реализует базовый функционал для управления заказами, товарами и клиентами, используя PostgreSQL в качестве базы данных.
+
+## Технологии
+
+- Java 17
+- Maven
+- PostgreSQL 17
+- JDBC
+- Flyway (для миграций БД)
+- Docker
+
+## 1. Запуск PostgreSQL в Docker
+
+Для запуска базы данных PostgreSQL выполните следующие команды в терминале:
+
+`docker run -d --name pg-orders -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 postgres:17`
+
+`docker exec -it pg-orders psql -U postgres -c "CREATE USER orders_user WITH PASSWORD 'orders_pass'; GRANT ALL ON SCHEMA public TO orders_user;"`
+
+## 2. Создадим и заполним файл `src/main/resources/application.properties`
+```
+# Postgres JDBC connection
+db.url=jdbc:postgresql://localhost:5432/postgres
+db.user=orders_user
+db.password=orders_pass
+
+# Flyway
+flyway.enabled=true
+```
+
+## 3. Соберем проект 
+```
+mvn clean package
+```
+
+## 4. Запустим приложение
+```
+java -jar target/orders-jdbc-1.0.jar
+```
